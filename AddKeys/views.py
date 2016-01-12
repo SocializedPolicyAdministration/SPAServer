@@ -1,6 +1,7 @@
 from django.shortcuts import render
 
 from django.http import HttpResponse, Http404
+import json
 
 from models import KeyManager
 
@@ -17,7 +18,7 @@ def add_keys(request):
     if KeyManager.objects.filter(phone=phone).exists():
         return HttpResponse("you got keys already!")
 
-    paillier = Paillier(512)
+    paillier = Paillier(2048)
     ope = getOPEKey()
 
     def to_binary(num):
@@ -42,4 +43,6 @@ def polling_key_manager(request):
 def get_spa_request(request):
     if request.method != 'POST':
         return Http404
+    json_data = json.load(request.body)
+
     return HttpResponse("ha")

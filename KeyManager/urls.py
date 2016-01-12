@@ -14,10 +14,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include(blog_urls))
 """
 from django.conf.urls import url
-from addKeys.views import add_keys, polling_key_manager, get_spa_request
+from AddKeys.views import add_keys
+from CommunicationServer.views import get_spa_request
+from PollServer.views import polling_key_manager
+from MergeServer.views import get_merge_response
 
 urlpatterns = [
     url(r'^addKeys', add_keys),
     url(r'pollingKeyManager', polling_key_manager),
-    url(r'getSPARequest', get_spa_request)
+    url(r'getSPARequest', get_spa_request),
+    url(r'getSPAResponse', get_merge_response)
 ]
