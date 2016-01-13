@@ -17,6 +17,18 @@ def get_primer(n):
     return int(gmpy2.next_prime(r))
 
 
+def add(m1, m2, n_square):
+    return (m1 * m2) % n_square
+
+
+def mul(m1, m2, n_square):
+    return gmpy2.powmod(m1, m2, n_square)
+
+
+def sub(m1, m2, n_square):
+    return add(m1, mul(m2, -1, n_square), n_square)
+
+
 class Paillier(object):
     """A class support paillier encryption"""
     def __init__(self, n_length=512):
@@ -41,9 +53,26 @@ class Paillier(object):
         self.n = n
         self.lambda_ = lambda_
         self.mu = mu
+        self.n_len = n_len
 
     def get_public_key(self):
         return [self.g, self.n]
 
     def get_private_key(self):
         return [self.lambda_, self.mu]
+    def enc(self, m):
+        r = get_primer(self.n_len)
+        n_square = self.n * self.n
+        a1 = gmpy2.powmod(self.g, m, n_square)
+        a2 = gmpy2.powmod(r, self.n, n_square)
+        return (a1 * a2) % n_square
+    def dec(self, c):
+        n_square = self.n * self.n
+        u = gmpy2.powmod(c, self.lambda_, n_square)
+        return ((u - 1) / self.n * self.mu) % self.n
+
+paillier = Paillier(n_length=512)
+a = paillier.enc(11)
+b = paillier.enc(10)
+b_a = sub(b, a, paillier.n * paillier.n)
+print paillier.dec(b_a) - paillier.n

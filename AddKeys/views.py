@@ -21,15 +21,12 @@ def add_keys(request):
     paillier = Paillier(2048)
     ope = getOPEKey()
 
-    def to_binary(num):
-        return '{0:b}'.format(num)
-
-    paillierPublic = ' '.join(map(to_binary, paillier.get_public_key()))
-    paillierPrivate = ' '.join(map(to_binary, paillier.get_private_key()))
-    opeKey = to_binary(ope)
-    p = KeyManager(phone=phone, paillier_private=paillierPrivate, paillier_public=paillierPublic, ope_key=opeKey)
+    [g, n] = paillier.get_public_key()
+    [lambda_, mu]= paillier.get_private_key()
+    opeKey = ope
+    p = KeyManager(phone=phone, paillier_private=str(lambda_) + ' ' + str(mu), paillier_public=str(g) + ' ' + str(n), ope_key=opeKey)
     p.save()
-    keys = paillierPrivate + ' ' + paillierPrivate + ' ' + opeKey
+    keys = str(lambda_) + ' ' + str(mu) + ' ' + str(g) + ' ' + str(n) + ' ' + str(ope)
     return HttpResponse(keys)
 
 
