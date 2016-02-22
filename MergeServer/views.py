@@ -1,14 +1,18 @@
+import time
+
 from django.shortcuts import render
 from django.http import HttpResponse, Http404
 
 from MergeServer.models import Results
 from KeyManager.Util.Paillier import mul, add
+from KeyManager.Util.TimeCost import SPATime
 
 from CommunicationServer.models import Transaction
 
 # Create your views here.
 
 def get_merge_response(request):
+    start = time.time()
     if request.method != 'POST':
         return Http404
     values = request.POST['values'].split(',')
@@ -26,13 +30,14 @@ def get_merge_response(request):
     if results.exists():
         result = results[0].values.split(',')
         count = results[0].count
+        print "count: " + str(count)
         new_result = []
         for i in range(size):
             if spa_policies[i] == 'Average':
                 [this_value, this_weight] = result[i].split(' ')
                 [sum_value, sum_weight] = values[i].split(' ')
                 this_result = str(add(long(this_value), long(sum_value), n_square)) \
-                              + ' ' + str(add(long(this_weight), long(sum_weight), n_square))
+                              + ' ' + str(long(this_weight) + long(sum_weight))
                 new_result.append(this_result)
             if spa_policies[i] == 'MaximumValue' or spa_policies[i] == 'MinimumValue':
                 this_result = result[i] + ' ' + values[i]
@@ -47,6 +52,8 @@ def get_merge_response(request):
                     this_result.append(str(ans))
                 new_result.append(' '.join(this_result))
         results.update(values=','.join(new_result), count=count + 1)
+        end = time.time()
+        SPATime(end - start)
     else:
         r = Results(values=request.POST['values']
                     , requester=requester_number
@@ -54,7 +61,8 @@ def get_merge_response(request):
                     , n_square=n_square
                     , settings=settings)
         r.save()
-
+        end = time.time()
+        SPATime(end - start)
 
     return HttpResponse('ok')
 

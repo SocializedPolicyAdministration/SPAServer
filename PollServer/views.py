@@ -1,3 +1,5 @@
+import time
+
 from django.http import Http404
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -7,6 +9,7 @@ from datetime import datetime, timedelta
 from CommunicationServer.models import Transaction
 from MergeServer.models import Results
 from KeyManager.Util.Paillier import add, mul, sub
+from KeyManager.Util.TimeCost import SPATime
 
 # Create your views here.
 
@@ -23,7 +26,7 @@ def polling_key_manager(request):
     reqs = Transaction.objects.filter(respondent=id)
     time_threshold = datetime.now() - timedelta(minutes=30)
     # setting_reqs = Results.objects.filter(requester=id, count__gt=3, start_time__lt=time_threshold)
-    setting_reqs = Results.objects.filter(requester=id, count__gt=3)
+    setting_reqs = Results.objects.filter(requester=id, count__gt=0)
     if reqs.exists():
         req = reqs.first()
         to_respondent = ' '.join([str(req.request), req.weight, req.paillier_n, req.paillier_g,
@@ -31,6 +34,7 @@ def polling_key_manager(request):
         req.delete()
         return HttpResponse(to_respondent)
     elif setting_reqs.exists():
+        start = time.time()
         values = setting_reqs[0].values.split(',')
         spa_policies = setting_reqs[0].spa_policies.split(',')
         settings = setting_reqs[0].settings.split(',')
@@ -54,6 +58,9 @@ def polling_key_manager(request):
                 return_req.append(values[i])
             else:
                 pass
+        setting_reqs.delete()
+        end = time.time()
+        SPATime(end - start)
         return HttpResponse('merged:' + ','.join(return_req))
     else:
         return HttpResponse('ok')
