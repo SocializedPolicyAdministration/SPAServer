@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 
 from CommunicationServer.models import Transaction
 from MergeServer.models import Results
+from ResultQuality.models import RequestAssessment
+from Assessment.models import Assessment
 from KeyManager.Util.Paillier import add, mul, sub
 from KeyManager.Util.TimeCost import SPATime
 
@@ -27,6 +29,9 @@ def polling_key_manager(request):
     time_threshold = datetime.now() - timedelta(minutes=30)
     # setting_reqs = Results.objects.filter(requester=id, count__gt=3, start_time__lt=time_threshold)
     setting_reqs = Results.objects.filter(requester=id, count__gt=0)
+    result_reqs = RequestAssessment.objects.filter(requester=id)
+    # assess_reqs = Assessment.objects.filter(requester=id, count__gt=3, start_time__lt=time_threshold)
+    assess_reqs = Assessment.objects.filter(requester=id, count__gt=0)
     if reqs.exists():
         req = reqs.first()
         to_respondent = ' '.join([str(req.request), req.weight, req.paillier_n, req.paillier_g,
@@ -62,6 +67,23 @@ def polling_key_manager(request):
         end = time.time()
         SPATime(end - start)
         return HttpResponse('merged:' + ','.join(return_req))
+    elif result_reqs.exists():
+        requester = result_reqs[0].requester
+        content = result_reqs[0].requester
+        result_reqs.delete()
+        return HttpResponse('result:' + requester + ': ' + content)
+    elif assess_reqs.exists():
+        suitable = 0
+        malicious = 0
+        unknow = 0
+        for assess in assess_reqs:
+            if assess.assess == 0:
+                suitable += 1
+            elif assess.assess == 1:
+                malicious += 1
+            else:
+                unknow += 1
+        return HttpResponse('assess:' + suitable + ',' + malicious + ',' + unknow)
     else:
         return HttpResponse('ok')
 
